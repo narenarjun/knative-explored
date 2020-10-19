@@ -144,3 +144,86 @@ kn revision ls
 ```
 
 `curl` the url to see the result.
+
+## Traffic patterns 🚦
+
+By mentioning `traffic` rules in the yaml file , we can achive 
+
+```
+  * Blue-green deployments  
+  * canary deployments
+```
+and even
+
+```
+  *  Dark launch deployments.
+```
+
+First let's clean the pervious deployed `ksvc` [ksvc- knative Service]
+
+```bash
+kubectl delete -f  ./serving-yamls/service-env.yaml
+```
+
+Now deploy, 2 new services:
+
+`greeter-v1`:
+```bash
+kubectl apply -f ./serving-yamls/greeter-v1-service.yaml
+```
+
+&
+
+`greeter-v2`:
+```bash
+kubectl apply -f ./serving-yamls/greeter-v2-service.yaml
+```
+
+list the revisions with `kn revision ls`
+
+### 🔵 ➡ 💚  Blue - Green deployment
+
+Let's implement the blue green deployment switch.
+
+added the traffic pattern in the `greeter-v1-service.yaml`:
+
+```yaml
+traffic:
+    - tag: v1
+      revisionName: greeter-v1
+      percent: 100
+    - tag: v2
+      revisionName: greeter-v2
+      percent: 0
+    - tag: latest
+      latestRevision: true
+      percent: 0
+```
+```bash
+kubectl apply -f ./serving-yamls/greeter-v1-service.yaml
+```
+when we `curl`, all the trafic goes to v1.
+
+since the tags are set with the percentages of distributin:
+
+* `v1` - The revision is going to have all 100% traffic distribution
+
+* `v2` - The previously active revision, which will now have zero traffic
+
+* `latest` - The route pointing to any latest service deployment, by setting to zero we are making sure the latest revision is not picked up automatically.
+
+
+
+### 🐦 Canary release deployment
+
+A Canary release is more effective when you want to reduce the risk of 
+introducing new feature.
+It allows you a more effective feature-feedback loop before rolling 
+out the change to your entire user base.
+
+deploy canary release by:
+```bash
+kubectl apply -f ./serving-yamls/service-canary.yaml
+```
+
+curl the url given when `kn service ls` , and we can see the canary version approx 20% on all requests made.
