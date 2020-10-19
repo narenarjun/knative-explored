@@ -31,11 +31,15 @@ kubectl apply -f ./install/knative-serving/serving-core.yaml
 
 ### Installing a network layer for knative:
 
-Istio is choosen for this local cluster network layer.
+Istio is choosen for this Cluster network layer.
 
 ```bash
 kubectl apply -f ./install/knative-serving/istio-release.yaml
 ```
+
+> ### 📚 Note:
+> you don't have to choose `istio` for your cluster network layer, there are other options such as `gloo`, `contour`, `kong`. learn more and pick one from this [installing page.](https://knative.dev/docs/install/any-kubernetes-cluster/#serving_networking)
+
 
 ### Service Mesh
 
@@ -67,6 +71,8 @@ kubectl apply ./install/knative-serving/serving-default-domain.yaml
 
 ### verifying everything is installed.
 
+We want all the pods to be to a status of `Running` or `Completed`, which ensures knative installed smoothly.
+
 ```bash
 >>$ kubectl get pods -n knative-serving
 NAME                                READY   STATUS      RESTARTS   AGE
@@ -81,3 +87,60 @@ default-domain-drjth                0/1     Completed   0          44h
 ```
 > ### Note
 > The age shows 45h, since i got it deployed and checked before writing the readme, so it very long. When you set and run `kubectl get pods -n knative-serving`, the age will be much less since you set that just then.
+
+## Deployments
+
+Create a namespace for these deployments to come.
+
+```bash
+kubctl create ns knplayground
+```
+
+Labeling the namespace for automatic istio service mesh sidecar injection.
+
+```bash
+kubectl label ns knplayground istio-injection=enabled
+```
+
+Now,Lets deploy some sample app and see the knative in action.
+
+```bash
+kubectl apply -f ./serving-yamls/service.yaml
+```
+
+Get the created  knative service details with
+
+* `kubectl`:
+```bash
+kubectl get ksvc
+```
+or 
+
+* `kn`:
+```bash
+kn service ls
+```
+
+`curl` the url shown in the result.
+
+#### revision
+
+let's update our knative deployment.
+
+```bash
+kubectl apply -f  ./serving-yamls/service-env.yaml
+```
+let's see the revisions via 
+
+* `kubectl`:
+```bash
+kubectl get revisions
+```
+or 
+
+* `kn` :
+```bash
+kn revision ls
+```
+
+`curl` the url to see the result.
